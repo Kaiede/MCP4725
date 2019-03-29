@@ -16,7 +16,7 @@ extension Package.Dependency {
 let package = Package(
     name: "MCP4725",
     dependencies: [
-        .Package(url: "https://github.com/Kaiede/SingleBoard.git", from: "0.2.2"),
+        .Package(url: "https://github.com/Kaiede/SingleBoard.git", from: "1.0.0"),
     ],
     swiftLanguageVersions: [3, 4]
 )

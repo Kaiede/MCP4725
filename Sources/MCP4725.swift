@@ -29,6 +29,7 @@
     import Darwin.C
 #endif
 
+import Foundation
 import SingleBoard
 
 public class MCP4725 {
@@ -44,7 +45,7 @@ public class MCP4725 {
     }
 
     internal struct FastModeData: I2CWritable {
-        static var i2cReadLength: Int = MemoryLayout<UInt16>.size
+        static var dataLength: Int = MemoryLayout<UInt16>.size
         var mode: PowerDownMode
         var voltage: UInt16
 
@@ -53,11 +54,10 @@ public class MCP4725 {
             self.mode = mode
         }
 
-        func encodeToBuffer() -> [UInt8]
-        {
-            var data = [UInt8].init(repeating: 0, count: FastModeData.i2cReadLength)
-            data[0] = UInt8(mode.rawValue << 4) | UInt8(self.voltage & 0x0F00)
-            data[1] = UInt8(self.voltage & 0xFF)
+        func encodeToData() -> Data {
+            var data = Data(capacity: FastModeData.dataLength)
+            data.append(UInt8(mode.rawValue << 4) | UInt8(self.voltage & 0x0F00))
+            data.append(UInt8(self.voltage & 0xFF))
             return data
         }
     }
@@ -68,7 +68,7 @@ public class MCP4725 {
     }
 
     internal struct FullData: I2CReadWritable {
-        static var i2cReadLength: Int = MemoryLayout<UInt8>.size * 3
+        static var dataLength: Int = MemoryLayout<UInt8>.size * 3
 
         var command: WriteCommand
         var voltage: UInt16
@@ -78,11 +78,11 @@ public class MCP4725 {
         var ready: Bool
 
         // Read Initializer
-        init(i2cBuffer: [UInt8]) {
+        init(data: Data) {
             self.command = .writeDac
-            self.mode = PowerDownMode(rawValue: i2cBuffer[0] >> 1 & 0x3) ?? .normal
-            self.ready = i2cBuffer[0] & 0x80 != 0
-            self.voltage = UInt16(i2cBuffer[1]) << 4 + UInt16(i2cBuffer[2]) >> 4
+            self.mode = PowerDownMode(rawValue: data[0] >> 1 & 0x3) ?? .normal
+            self.ready = data[0] & 0x80 != 0
+            self.voltage = UInt16(data[1]) << 4 + UInt16(data[2]) >> 4
         }
 
         // Write Initializer
@@ -93,13 +93,11 @@ public class MCP4725 {
             self.mode = mode
         }
 
-        func encodeToBuffer() -> [UInt8]
-        {
-            var data = [UInt8].init(repeating: 0, count: FullData.i2cReadLength)
-            data[0] = self.mode.rawValue << 1
-            data[0] |= self.command.rawValue << 5
-            data[1] = UInt8(self.voltage & 0xFFF >> 4)
-            data[2] = UInt8(self.voltage & 0xF << 4)
+        func encodeToData() -> Data {
+            var data = Data(capacity: FullData.dataLength)
+            data.append(self.command.rawValue << 5 + self.mode.rawValue << 1)
+            data.append(UInt8(self.voltage & 0xFFF >> 4))
+            data.append(UInt8(self.voltage & 0xF << 4))
             return data
         }
     }
@@ -119,12 +117,26 @@ public class MCP4725 {
     }
 
     public func setDefault(voltage: UInt16, mode: PowerDownMode = .normal) {
+        waitForReady()
         let result = FullData(command: .writeDacAndRom, voltage: voltage, mode: mode)
         self.endpoint.encode(value: result)
     }
 
-    public func readVoltage() -> (UInt16, PowerDownMode, Bool) {
+    public func readVoltage() -> (UInt16, PowerDownMode) {
+        let result = readFromChip()
+        return (result.voltage, result.mode)
+    }
+
+    private func waitForReady() {
+        var result = readFromChip()
+        while !result.ready {
+            usleep(5000)
+            result = readFromChip()
+        }
+    }
+
+    private func readFromChip() -> FullData {
         let result: FullData = self.endpoint.decode()
-        return (result.voltage, result.mode, result.ready)
+        return result
     }
 }
