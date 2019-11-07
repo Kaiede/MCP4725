@@ -1,11 +1,15 @@
 # MCP4725
 
-[![Build Status](https://travis-ci.org/Kaiede/MCP4725.svg?branch=master)](https://travis-ci.org/Kaiede/MCP4725)
-![Swift](https://img.shields.io/badge/Swift-3.1.1-green.svg)
-![Swift](https://img.shields.io/badge/Swift-4.1.2-orange.svg)
+[![Build Status](https://github.com/Kaiede/MCP4725/workflows/CI/badge.svg)](https://github.com/Kaiede/MCP4725/actions)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
-![Raspbian](https://img.shields.io/badge/OS-Raspbian%20Stretch-green.svg)
+![Swift](https://img.shields.io/badge/Swift-5.x-brightgreen.svg?style=flat)
+![Swift](https://img.shields.io/badge/Swift-4.x-brightgreen.svg?style=flat)
+![Swift](https://img.shields.io/badge/Swift-3.x-brightgreen.svg?style=flat)
+
+![SwiftPM](https://img.shields.io/badge/SwiftPM-✔-blue.svg?style=flat)
+
+![Raspbian](https://img.shields.io/badge/OS-Raspbian-green.svg)
 
 A Swift driver for the MCP4725 DAC over I2C, using SingleBoard.
 
